@@ -34,6 +34,9 @@ public class PostService {
         post.setContenido(req.contenido());
         post.setAuthorEmail(authorEmail);
         post.setTipo(parseTipo(req.tipo()));
+        post.setLatitud(req.latitud());
+        post.setLongitud(req.longitud());
+        post.setDireccion(req.direccion());
         return PostResponse.from(postRepository.save(post));
     }
 

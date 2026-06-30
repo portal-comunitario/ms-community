@@ -9,7 +9,10 @@ public record PostResponse(
         String contenido,
         String authorEmail,
         String tipo,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        Double latitud,
+        Double longitud,
+        String direccion
 ) {
     public static PostResponse from(Post post) {
         return new PostResponse(
@@ -18,7 +21,10 @@ public record PostResponse(
                 post.getContenido(),
                 post.getAuthorEmail(),
                 post.getTipo() != null ? post.getTipo().name() : null,
-                post.getCreatedAt()
+                post.getCreatedAt(),
+                post.getLatitud(),
+                post.getLongitud(),
+                post.getDireccion()
         );
     }
 }
