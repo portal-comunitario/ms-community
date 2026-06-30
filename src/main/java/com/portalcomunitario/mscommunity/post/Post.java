@@ -44,6 +44,10 @@ public class Post {
     @Column(length = 500)
     private String direccion;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private PostEstado estado;
+
     @PrePersist
     protected void onCreate() {
         if (createdAt == null) {
@@ -51,6 +55,9 @@ public class Post {
         }
         if (tipo == null) {
             tipo = PostTipo.ANUNCIO;
+        }
+        if (estado == null) {
+            estado = PostEstado.PENDIENTE;
         }
     }
 
@@ -124,5 +131,13 @@ public class Post {
 
     public void setDireccion(String direccion) {
         this.direccion = direccion;
+    }
+
+    public PostEstado getEstado() {
+        return estado;
+    }
+
+    public void setEstado(PostEstado estado) {
+        this.estado = estado;
     }
 }

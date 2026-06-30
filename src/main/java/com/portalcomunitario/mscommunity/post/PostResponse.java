@@ -12,7 +12,8 @@ public record PostResponse(
         LocalDateTime createdAt,
         Double latitud,
         Double longitud,
-        String direccion
+        String direccion,
+        String estado
 ) {
     public static PostResponse from(Post post) {
         return new PostResponse(
@@ -24,7 +25,8 @@ public record PostResponse(
                 post.getCreatedAt(),
                 post.getLatitud(),
                 post.getLongitud(),
-                post.getDireccion()
+                post.getDireccion(),
+                post.getEstado() != null ? post.getEstado().name() : PostEstado.PENDIENTE.name()
         );
     }
 }

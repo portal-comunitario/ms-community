@@ -16,8 +16,24 @@ public class PostService {
         this.postRepository = postRepository;
     }
 
-    public List<PostResponse> findAll() {
-        return postRepository.findAllByOrderByCreatedAtDesc().stream()
+    /**
+     * Admins y moderadores ven todos los posts.
+     * Vecinos solo ven los APROBADO.
+     */
+    public List<PostResponse> findAll(String role) {
+        if ("COMMUNITY_ADMIN".equals(role) || "PLATFORM_ADMIN".equals(role)) {
+            return postRepository.findAllByOrderByCreatedAtDesc().stream()
+                    .map(PostResponse::from)
+                    .toList();
+        }
+        return postRepository.findByEstadoOrderByCreatedAtDesc(PostEstado.APROBADO).stream()
+                .map(PostResponse::from)
+                .toList();
+    }
+
+    /** Cola de moderación — solo posts PENDIENTE. */
+    public List<PostResponse> findPendientes() {
+        return postRepository.findByEstadoOrderByCreatedAtDesc(PostEstado.PENDIENTE).stream()
                 .map(PostResponse::from)
                 .toList();
     }
@@ -37,6 +53,21 @@ public class PostService {
         post.setLatitud(req.latitud());
         post.setLongitud(req.longitud());
         post.setDireccion(req.direccion());
+        post.setEstado(PostEstado.PENDIENTE);
+        return PostResponse.from(postRepository.save(post));
+    }
+
+    public PostResponse aprobar(UUID id) {
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post no encontrado"));
+        post.setEstado(PostEstado.APROBADO);
+        return PostResponse.from(postRepository.save(post));
+    }
+
+    public PostResponse rechazar(UUID id) {
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post no encontrado"));
+        post.setEstado(PostEstado.RECHAZADO);
         return PostResponse.from(postRepository.save(post));
     }
 
@@ -48,9 +79,7 @@ public class PostService {
     }
 
     private PostTipo parseTipo(String tipo) {
-        if (tipo == null || tipo.isBlank()) {
-            return PostTipo.ANUNCIO;
-        }
+        if (tipo == null || tipo.isBlank()) return PostTipo.ANUNCIO;
         try {
             return PostTipo.valueOf(tipo.trim().toUpperCase());
         } catch (IllegalArgumentException e) {
