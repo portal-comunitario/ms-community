@@ -1,4 +1,4 @@
-package com.portalcomunitario.mscommunity.event;
+package com.portalcomunitario.mscommunity.aviso;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -18,41 +19,63 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Dominio C — Eventos / Actividades. Lectura pública (autenticada);
- * creación/borrado solo dirigentes (COMMUNITY_ADMIN / PLATFORM_ADMIN).
+ * Dominio B — Tablón Vecinal. Cualquier vecino publica (queda PENDIENTE);
+ * moderación (pendientes/aprobar/rechazar) solo dirigentes; el autor puede
+ * marcar resuelto y borrar el suyo.
  */
 @RestController
-@RequestMapping("/events")
-public class EventController {
+@RequestMapping("/avisos")
+public class AvisoController {
 
-    private final EventService eventService;
+    private final AvisoService service;
 
-    public EventController(EventService eventService) {
-        this.eventService = eventService;
+    public AvisoController(AvisoService service) {
+        this.service = service;
     }
 
     @GetMapping
-    public List<EventResponse> findAll() {
-        return eventService.findAll();
+    public List<AvisoResponse> findAll(Authentication auth) {
+        return service.findAll(extractRole(auth));
+    }
+
+    @GetMapping("/pendientes")
+    public List<AvisoResponse> findPendientes(Authentication auth) {
+        requireAdmin(auth);
+        return service.findPendientes();
     }
 
     @GetMapping("/{id}")
-    public EventResponse findById(@PathVariable UUID id) {
-        return eventService.findById(id);
+    public AvisoResponse findById(@PathVariable UUID id) {
+        return service.findById(id);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public EventResponse create(@RequestBody EventRequest request, Authentication auth) {
+    public AvisoResponse create(@RequestBody AvisoRequest request, Authentication auth) {
+        return service.create(request, extractEmail(auth));
+    }
+
+    @PutMapping("/{id}/aprobar")
+    public AvisoResponse aprobar(@PathVariable UUID id, Authentication auth) {
         requireAdmin(auth);
-        return eventService.create(request, extractEmail(auth));
+        return service.aprobar(id);
+    }
+
+    @PutMapping("/{id}/rechazar")
+    public AvisoResponse rechazar(@PathVariable UUID id, Authentication auth) {
+        requireAdmin(auth);
+        return service.rechazar(id);
+    }
+
+    @PutMapping("/{id}/resuelto")
+    public AvisoResponse marcarResuelto(@PathVariable UUID id, Authentication auth) {
+        return service.marcarResuelto(id, extractEmail(auth), extractRole(auth));
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable UUID id, Authentication auth) {
-        requireAdmin(auth);
-        eventService.delete(id);
+        service.delete(id, extractEmail(auth), extractRole(auth));
     }
 
     private String extractRole(Authentication auth) {
@@ -63,6 +86,7 @@ public class EventController {
         return "VECINO";
     }
 
+    /** Email del autor: subject del JWT, con respaldo en los claims email/name. */
     private String extractEmail(Authentication auth) {
         if (auth instanceof JwtAuthenticationToken jwtAuth) {
             Jwt jwt = jwtAuth.getToken();
@@ -86,7 +110,7 @@ public class EventController {
     private void requireAdmin(Authentication auth) {
         String role = extractRole(auth);
         if (!"COMMUNITY_ADMIN".equals(role) && !"PLATFORM_ADMIN".equals(role)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Solo los dirigentes pueden gestionar eventos");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Acceso denegado");
         }
     }
 }

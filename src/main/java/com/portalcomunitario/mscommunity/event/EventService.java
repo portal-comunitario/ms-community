@@ -35,6 +35,8 @@ public class EventService {
         event.setFechaInicio(req.fechaInicio());
         event.setFechaFin(req.fechaFin());
         event.setUbicacion(req.ubicacion());
+        event.setCategoria(parseCategoria(req.categoria()));
+        event.setAgrupacionId(req.agrupacionId());
         event.setAuthorEmail(authorEmail);
         return EventResponse.from(eventRepository.save(event));
     }
@@ -44,5 +46,14 @@ public class EventService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Evento no encontrado");
         }
         eventRepository.deleteById(id);
+    }
+
+    private EventCategoria parseCategoria(String categoria) {
+        if (categoria == null || categoria.isBlank()) return EventCategoria.GENERAL;
+        try {
+            return EventCategoria.valueOf(categoria.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return EventCategoria.GENERAL;
+        }
     }
 }

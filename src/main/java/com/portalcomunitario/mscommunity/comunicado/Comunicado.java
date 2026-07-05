@@ -1,4 +1,4 @@
-package com.portalcomunitario.mscommunity.event;
+package com.portalcomunitario.mscommunity.comunicado;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -13,9 +13,13 @@ import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+/**
+ * Dominio A — Comunicado / Noticia oficial (informativo).
+ * Publicado por el dirigente. Sin precio, sin ubicación, sin moderación.
+ */
 @Entity
-@Table(name = "events")
-public class Event {
+@Table(name = "comunicados")
+public class Comunicado {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -24,23 +28,15 @@ public class Event {
     @Column(nullable = false)
     private String titulo;
 
-    @Column(columnDefinition = "TEXT")
-    private String descripcion;
-
-    @Column(name = "fecha_inicio", nullable = false)
-    private LocalDateTime fechaInicio;
-
-    @Column(name = "fecha_fin")
-    private LocalDateTime fechaFin;
-
-    private String ubicacion;
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String contenido;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 30)
-    private EventCategoria categoria;
+    @Column(nullable = false, length = 20)
+    private ComunicadoCategoria categoria;
 
-    @Column(name = "agrupacion_id")
-    private UUID agrupacionId;
+    @Column(name = "imagen_url", length = 500)
+    private String imagenUrl;
 
     @Column(name = "author_email", nullable = false)
     private String authorEmail;
@@ -54,7 +50,7 @@ public class Event {
             createdAt = LocalDateTime.now();
         }
         if (categoria == null) {
-            categoria = EventCategoria.GENERAL;
+            categoria = ComunicadoCategoria.NOTICIA;
         }
     }
 
@@ -64,23 +60,14 @@ public class Event {
     public String getTitulo() { return titulo; }
     public void setTitulo(String titulo) { this.titulo = titulo; }
 
-    public String getDescripcion() { return descripcion; }
-    public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
+    public String getContenido() { return contenido; }
+    public void setContenido(String contenido) { this.contenido = contenido; }
 
-    public LocalDateTime getFechaInicio() { return fechaInicio; }
-    public void setFechaInicio(LocalDateTime fechaInicio) { this.fechaInicio = fechaInicio; }
+    public ComunicadoCategoria getCategoria() { return categoria; }
+    public void setCategoria(ComunicadoCategoria categoria) { this.categoria = categoria; }
 
-    public LocalDateTime getFechaFin() { return fechaFin; }
-    public void setFechaFin(LocalDateTime fechaFin) { this.fechaFin = fechaFin; }
-
-    public String getUbicacion() { return ubicacion; }
-    public void setUbicacion(String ubicacion) { this.ubicacion = ubicacion; }
-
-    public EventCategoria getCategoria() { return categoria; }
-    public void setCategoria(EventCategoria categoria) { this.categoria = categoria; }
-
-    public UUID getAgrupacionId() { return agrupacionId; }
-    public void setAgrupacionId(UUID agrupacionId) { this.agrupacionId = agrupacionId; }
+    public String getImagenUrl() { return imagenUrl; }
+    public void setImagenUrl(String imagenUrl) { this.imagenUrl = imagenUrl; }
 
     public String getAuthorEmail() { return authorEmail; }
     public void setAuthorEmail(String authorEmail) { this.authorEmail = authorEmail; }

@@ -10,6 +10,8 @@ public record EventResponse(
         LocalDateTime fechaInicio,
         LocalDateTime fechaFin,
         String ubicacion,
+        String categoria,
+        UUID agrupacionId,
         String authorEmail,
         LocalDateTime createdAt
 ) {
@@ -21,6 +23,8 @@ public record EventResponse(
                 event.getFechaInicio(),
                 event.getFechaFin(),
                 event.getUbicacion(),
+                event.getCategoria() != null ? event.getCategoria().name() : EventCategoria.GENERAL.name(),
+                event.getAgrupacionId(),
                 event.getAuthorEmail(),
                 event.getCreatedAt()
         );
