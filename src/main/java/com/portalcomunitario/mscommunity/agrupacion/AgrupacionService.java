@@ -1,6 +1,8 @@
 package com.portalcomunitario.mscommunity.agrupacion;
 
 import org.springframework.http.HttpStatus;
+import com.portalcomunitario.mscommunity.cuota.CuotaService;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -18,13 +20,16 @@ public class AgrupacionService {
     private final AgrupacionRepository repository;
     private final InscripcionAgrupacionRepository inscripcionRepository;
     private final ReunionCanceladaRepository reunionCanceladaRepository;
+    private final CuotaService cuotaService;
 
     public AgrupacionService(AgrupacionRepository repository,
                              InscripcionAgrupacionRepository inscripcionRepository,
-                             ReunionCanceladaRepository reunionCanceladaRepository) {
+                             ReunionCanceladaRepository reunionCanceladaRepository,
+                             @Lazy CuotaService cuotaService) {
         this.repository = repository;
         this.inscripcionRepository = inscripcionRepository;
         this.reunionCanceladaRepository = reunionCanceladaRepository;
+        this.cuotaService = cuotaService;
     }
 
     public List<AgrupacionResponse> findAll(String requesterEmail) {
@@ -74,6 +79,7 @@ public class AgrupacionService {
         i.setAgrupacionId(id);
         i.setVecinoEmail(email);
         inscripcionRepository.save(i);
+        cuotaService.generarParaNuevoSocio(id, email);
     }
 
     @Transactional
