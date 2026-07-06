@@ -10,6 +10,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -42,8 +43,31 @@ public class Event {
     @Column(name = "agrupacion_id")
     private UUID agrupacionId;
 
+    @Column(length = 60)
+    private String subcategoria;
+
+    @Column(length = 9)
+    private String color;
+
+    private Double latitud;
+    private Double longitud;
+
+    @Column(nullable = false)
+    private boolean recurrente = false;
+
+    @Column(length = 20)
+    private String frecuencia;   // DIARIA | SEMANAL | MENSUAL | ANUAL
+
+    private Integer intervalo;   // cada N
+
+    @Column(name = "recurrencia_fin")
+    private LocalDate recurrenciaFin;
+
     @Column(name = "author_email", nullable = false)
     private String authorEmail;
+
+    @Column(name = "author_nombre", length = 120)
+    private String authorNombre;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -82,8 +106,35 @@ public class Event {
     public UUID getAgrupacionId() { return agrupacionId; }
     public void setAgrupacionId(UUID agrupacionId) { this.agrupacionId = agrupacionId; }
 
+    public Double getLatitud() { return latitud; }
+    public void setLatitud(Double latitud) { this.latitud = latitud; }
+
+    public Double getLongitud() { return longitud; }
+    public void setLongitud(Double longitud) { this.longitud = longitud; }
+
+    public boolean isRecurrente() { return recurrente; }
+    public void setRecurrente(boolean recurrente) { this.recurrente = recurrente; }
+
+    public String getFrecuencia() { return frecuencia; }
+    public void setFrecuencia(String frecuencia) { this.frecuencia = frecuencia; }
+
+    public Integer getIntervalo() { return intervalo; }
+    public void setIntervalo(Integer intervalo) { this.intervalo = intervalo; }
+
+    public LocalDate getRecurrenciaFin() { return recurrenciaFin; }
+    public void setRecurrenciaFin(LocalDate recurrenciaFin) { this.recurrenciaFin = recurrenciaFin; }
+
+    public String getSubcategoria() { return subcategoria; }
+    public void setSubcategoria(String subcategoria) { this.subcategoria = subcategoria; }
+
+    public String getColor() { return color; }
+    public void setColor(String color) { this.color = color; }
+
     public String getAuthorEmail() { return authorEmail; }
     public void setAuthorEmail(String authorEmail) { this.authorEmail = authorEmail; }
+
+    public String getAuthorNombre() { return authorNombre; }
+    public void setAuthorNombre(String authorNombre) { this.authorNombre = authorNombre; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

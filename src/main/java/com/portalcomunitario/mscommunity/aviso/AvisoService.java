@@ -75,6 +75,21 @@ public class AvisoService {
         return AvisoResponse.from(repository.save(a));
     }
 
+    /** El autor (o un admin) edita su aviso. Conserva estado y autor originales. */
+    public AvisoResponse update(UUID id, AvisoRequest req, String requesterEmail, String role) {
+        Aviso a = get(id);
+        requireAuthorOrAdmin(a, requesterEmail, role);
+        a.setTitulo(req.titulo());
+        a.setDescripcion(req.descripcion());
+        a.setCategoria(parseCategoria(req.categoria()));
+        a.setLatitud(req.latitud());
+        a.setLongitud(req.longitud());
+        a.setDireccion(req.direccion());
+        a.setPrecio(req.precio());
+        a.setContacto(req.contacto());
+        return AvisoResponse.from(repository.save(a));
+    }
+
     public void delete(UUID id, String requesterEmail, String role) {
         Aviso a = get(id);
         requireAuthorOrAdmin(a, requesterEmail, role);

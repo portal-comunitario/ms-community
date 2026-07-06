@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -45,7 +46,13 @@ public class EventController {
     @ResponseStatus(HttpStatus.CREATED)
     public EventResponse create(@RequestBody EventRequest request, Authentication auth) {
         requireAdmin(auth);
-        return eventService.create(request, extractEmail(auth));
+        return eventService.create(request, extractEmail(auth), extractNombre(auth));
+    }
+
+    @PutMapping("/{id}")
+    public EventResponse update(@PathVariable UUID id, @RequestBody EventRequest request, Authentication auth) {
+        requireAdmin(auth);
+        return eventService.update(id, request);
     }
 
     @DeleteMapping("/{id}")
@@ -74,6 +81,14 @@ public class EventController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No se pudo determinar el usuario autenticado");
         }
         return name;
+    }
+
+    private String extractNombre(Authentication auth) {
+        if (auth instanceof JwtAuthenticationToken jwtAuth) {
+            String n = jwtAuth.getToken().getClaimAsString("name");
+            if (n != null && !n.isBlank()) return n;
+        }
+        return null;
     }
 
     private String firstNonBlank(String... values) {

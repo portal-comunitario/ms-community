@@ -1,5 +1,6 @@
 package com.portalcomunitario.mscommunity.event;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -11,8 +12,17 @@ public record EventResponse(
         LocalDateTime fechaFin,
         String ubicacion,
         String categoria,
+        String subcategoria,
+        String color,
         UUID agrupacionId,
+        Double latitud,
+        Double longitud,
+        boolean recurrente,
+        String frecuencia,
+        Integer intervalo,
+        LocalDate recurrenciaFin,
         String authorEmail,
+        String authorNombre,
         LocalDateTime createdAt
 ) {
     public static EventResponse from(Event event) {
@@ -24,8 +34,17 @@ public record EventResponse(
                 event.getFechaFin(),
                 event.getUbicacion(),
                 event.getCategoria() != null ? event.getCategoria().name() : EventCategoria.GENERAL.name(),
+                event.getSubcategoria(),
+                event.getColor(),
                 event.getAgrupacionId(),
+                event.getLatitud(),
+                event.getLongitud(),
+                event.isRecurrente(),
+                event.getFrecuencia(),
+                event.getIntervalo(),
+                event.getRecurrenciaFin(),
                 event.getAuthorEmail(),
+                event.getAuthorNombre(),
                 event.getCreatedAt()
         );
     }

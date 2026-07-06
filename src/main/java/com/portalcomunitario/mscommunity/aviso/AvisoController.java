@@ -55,6 +55,11 @@ public class AvisoController {
         return service.create(request, extractEmail(auth));
     }
 
+    @PutMapping("/{id}")
+    public AvisoResponse update(@PathVariable UUID id, @RequestBody AvisoRequest request, Authentication auth) {
+        return service.update(id, request, extractEmail(auth), extractRole(auth));
+    }
+
     @PutMapping("/{id}/aprobar")
     public AvisoResponse aprobar(@PathVariable UUID id, Authentication auth) {
         requireAdmin(auth);

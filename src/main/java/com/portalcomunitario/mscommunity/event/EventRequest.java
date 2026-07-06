@@ -1,5 +1,6 @@
 package com.portalcomunitario.mscommunity.event;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -10,6 +11,14 @@ public record EventRequest(
         LocalDateTime fechaFin,
         String ubicacion,
         String categoria,
-        UUID agrupacionId
+        String subcategoria,
+        String color,
+        UUID agrupacionId,
+        Double latitud,
+        Double longitud,
+        boolean recurrente,
+        String frecuencia,
+        Integer intervalo,
+        LocalDate recurrenciaFin
 ) {
 }
