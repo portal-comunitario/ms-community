@@ -23,6 +23,8 @@ public record EventResponse(
         LocalDate recurrenciaFin,
         String authorEmail,
         String authorNombre,
+        java.time.LocalDateTime notificadoComunidad,
+        boolean recordatorioEnviado,
         LocalDateTime createdAt
 ) {
     public static EventResponse from(Event event) {
@@ -45,6 +47,8 @@ public record EventResponse(
                 event.getRecurrenciaFin(),
                 event.getAuthorEmail(),
                 event.getAuthorNombre(),
+                event.getNotificadoComunidad(),
+                event.isRecordatorioEnviado(),
                 event.getCreatedAt()
         );
     }

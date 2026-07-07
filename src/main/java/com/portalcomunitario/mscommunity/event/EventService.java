@@ -1,19 +1,34 @@
 package com.portalcomunitario.mscommunity.event;
 
+import com.portalcomunitario.mscommunity.contacto.ContactoClient;
+import com.portalcomunitario.mscommunity.messaging.Destinatario;
+import com.portalcomunitario.mscommunity.messaging.NotificacionEvento;
+import com.portalcomunitario.mscommunity.messaging.NotificacionPublisher;
+import com.portalcomunitario.mscommunity.messaging.RabbitConfig;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 
 @Service
 public class EventService {
 
-    private final EventRepository eventRepository;
+    private static final DateTimeFormatter FECHA = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
-    public EventService(EventRepository eventRepository) {
+    private final EventRepository eventRepository;
+    private final ContactoClient contactoClient;
+    private final NotificacionPublisher publisher;
+
+    public EventService(EventRepository eventRepository,
+                        ContactoClient contactoClient,
+                        NotificacionPublisher publisher) {
         this.eventRepository = eventRepository;
+        this.contactoClient = contactoClient;
+        this.publisher = publisher;
     }
 
     public List<EventResponse> findAll() {
@@ -26,6 +41,40 @@ public class EventService {
         Event event = eventRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Evento no encontrado"));
         return EventResponse.from(event);
+    }
+
+    /** El dirigente difunde un evento de comunidad a todos los vecinos (broadcast). */
+    public EventResponse notificarComunidad(UUID id) {
+        Event ev = eventRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Evento no encontrado"));
+        if (ev.getAgrupacionId() != null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Solo los eventos de comunidad se pueden difundir (los de agrupación son internos)");
+        }
+        publicar(ev, RabbitConfig.RK_EVENTO_COMUNIDAD, false);
+        ev.setNotificadoComunidad(LocalDateTime.now());
+        eventRepository.save(ev);
+        return EventResponse.from(ev);
+    }
+
+    /** Usado por el scheduler para el recordatorio del día antes. */
+    public void publicarRecordatorio(Event ev) {
+        publicar(ev, RabbitConfig.RK_EVENTO_RECORDATORIO, true);
+    }
+
+    private void publicar(Event ev, String routingKey, boolean recordatorio) {
+        List<Destinatario> destinatarios = contactoClient.todos().stream()
+                .map(c -> new Destinatario(c.nombre(), c.email(), c.telefono(), c.notificacionesActivas()))
+                .toList();
+        String cuando = ev.getFechaInicio() != null ? ev.getFechaInicio().format(FECHA) : "";
+        String lugar = ev.getUbicacion() != null && !ev.getUbicacion().isBlank() ? " en " + ev.getUbicacion() : "";
+        String titulo = recordatorio ? "Recordatorio: " + ev.getTitulo() : ev.getTitulo();
+        String mensaje = (recordatorio ? "Mañana: " : "Te invitamos a: ") + ev.getTitulo()
+                + " (" + cuando + ")" + lugar + "."
+                + (ev.getDescripcion() != null && !ev.getDescripcion().isBlank() ? " " + ev.getDescripcion() : "");
+        NotificacionEvento evento = new NotificacionEvento(
+                recordatorio ? "EVENTO_RECORDATORIO" : "EVENTO_COMUNIDAD", titulo, mensaje, destinatarios);
+        publisher.publicar(routingKey, evento);
     }
 
     public EventResponse create(EventRequest req, String authorEmail, String authorNombre) {

@@ -69,6 +69,12 @@ public class Event {
     @Column(name = "author_nombre", length = 120)
     private String authorNombre;
 
+    @Column(name = "notificado_comunidad")
+    private java.time.LocalDateTime notificadoComunidad;
+
+    @Column(name = "recordatorio_enviado", nullable = false)
+    private boolean recordatorioEnviado = false;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
@@ -135,6 +141,12 @@ public class Event {
 
     public String getAuthorNombre() { return authorNombre; }
     public void setAuthorNombre(String authorNombre) { this.authorNombre = authorNombre; }
+
+    public java.time.LocalDateTime getNotificadoComunidad() { return notificadoComunidad; }
+    public void setNotificadoComunidad(java.time.LocalDateTime v) { this.notificadoComunidad = v; }
+
+    public boolean isRecordatorioEnviado() { return recordatorioEnviado; }
+    public void setRecordatorioEnviado(boolean v) { this.recordatorioEnviado = v; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

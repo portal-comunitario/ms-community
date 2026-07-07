@@ -55,6 +55,12 @@ public class EventController {
         return eventService.update(id, request);
     }
 
+    @PostMapping("/{id}/notificar")
+    public EventResponse notificar(@PathVariable UUID id, Authentication auth) {
+        requireAdmin(auth);
+        return eventService.notificarComunidad(id);
+    }
+
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable UUID id, Authentication auth) {
