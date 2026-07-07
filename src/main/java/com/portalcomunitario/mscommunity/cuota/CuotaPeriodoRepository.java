@@ -8,4 +8,5 @@ import java.util.UUID;
 public interface CuotaPeriodoRepository extends JpaRepository<CuotaPeriodo, UUID> {
     Optional<CuotaPeriodo> findFirstByAgrupacionIdAndEstadoOrderByCreatedAtDesc(UUID agrupacionId, EstadoPeriodo estado);
     List<CuotaPeriodo> findByAgrupacionIdOrderByCreatedAtDesc(UUID agrupacionId);
+    List<CuotaPeriodo> findByEstado(EstadoPeriodo estado);
 }

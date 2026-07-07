@@ -28,3 +28,7 @@ spring.rabbitmq.username=guest
 spring.rabbitmq.password=guest
 # El broker es opcional en dev; no debe tumbar el health check.
 management.health.rabbit.enabled=false
+
+# Llamadas internas a ms-auth (resolver contacto/consentimiento de destinatarios)
+app.auth.base-url=http://localhost:8081
+app.internal.token=portal-internal-2026
