@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
+import com.portalcomunitario.mscommunity.tenant.TenantContext;
+
 import java.util.List;
 
 /** Cliente hacia ms-auth para resolver contacto + consentimiento de los destinatarios. */
@@ -44,15 +46,18 @@ public class ContactoClient {
     }
 
     private List<Contacto> consultar(String path) {
+        // Propaga la comunidad activa para que ms-auth resuelva los contactos en el schema correcto.
+        String tenant = TenantContext.getCurrentTenant();
         try {
             Contacto[] arr = http.get()
                     .uri(baseUrl + path)
                     .header("X-Internal-Token", token)
+                    .headers(h -> { if (tenant != null && !tenant.isBlank()) h.set("X-Tenant-ID", tenant); })
                     .retrieve()
                     .body(Contacto[].class);
             return arr != null ? List.of(arr) : List.of();
         } catch (Exception ex) {
-            log.error("No se pudo resolver contactos desde ms-auth ({}): {}", path, ex.getMessage());
+            log.error("No se pudo resolver contactos desde ms-auth ({}, tenant={}): {}", path, tenant, ex.getMessage());
             return List.of();
         }
     }
