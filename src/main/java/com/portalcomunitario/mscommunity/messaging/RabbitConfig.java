@@ -18,7 +18,6 @@ public class RabbitConfig {
 
     public static final String EXCHANGE = "portal.events";
 
-    // Routing keys que publica ms-community
     public static final String RK_CUOTA_PENDIENTE = "cuota.pendiente";
     public static final String RK_EVENTO_COMUNIDAD = "evento.comunidad";
     public static final String RK_EVENTO_RECORDATORIO = "evento.recordatorio";

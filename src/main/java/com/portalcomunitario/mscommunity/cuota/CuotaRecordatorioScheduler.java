@@ -52,7 +52,6 @@ public class CuotaRecordatorioScheduler {
         this.publisher = publisher;
     }
 
-    /** Diario a las 09:00. */
     @Scheduled(cron = "0 0 9 * * *")
     @Transactional
     public void revisar() {
@@ -61,7 +60,6 @@ public class CuotaRecordatorioScheduler {
         int publicados = 0;
 
         for (CuotaPeriodo periodo : periodoRepo.findByEstado(EstadoPeriodo.ABIERTA)) {
-            // Agrupar cuotas del período por socio
             Map<String, List<Cuota>> porSocio = new LinkedHashMap<>();
             for (Cuota c : cuotaRepo.findByPeriodoId(periodo.getId())) {
                 porSocio.computeIfAbsent(c.getVecinoEmail(), k -> new ArrayList<>()).add(c);

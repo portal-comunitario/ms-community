@@ -32,7 +32,6 @@ public class ContactoClient {
         return l.isEmpty() ? null : l.get(0);
     }
 
-    /** Contactos de una lista de emails. */
     public List<Contacto> porEmails(List<String> emails) {
         if (emails == null || emails.isEmpty()) {
             return List.of();
