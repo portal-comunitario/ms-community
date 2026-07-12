@@ -16,6 +16,7 @@ public record AvisoResponse(
         String contacto,
         String estado,
         boolean resuelto,
+        LocalDateTime resueltoAt,
         LocalDateTime createdAt
 ) {
     public static AvisoResponse from(Aviso a) {
@@ -32,6 +33,7 @@ public record AvisoResponse(
                 a.getContacto(),
                 a.getEstado() != null ? a.getEstado().name() : AvisoEstado.PENDIENTE.name(),
                 a.isResuelto(),
+                a.getResueltoAt(),
                 a.getCreatedAt()
         );
     }

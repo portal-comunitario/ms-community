@@ -35,7 +35,7 @@ public class AvisoController {
 
     @GetMapping
     public List<AvisoResponse> findAll(Authentication auth) {
-        return service.findAll(extractRole(auth));
+        return service.findAll(extractRole(auth), extractEmail(auth));
     }
 
     @GetMapping("/pendientes")
@@ -75,6 +75,11 @@ public class AvisoController {
     @PutMapping("/{id}/resuelto")
     public AvisoResponse marcarResuelto(@PathVariable UUID id, Authentication auth) {
         return service.marcarResuelto(id, extractEmail(auth), extractRole(auth));
+    }
+
+    @PutMapping("/{id}/reabrir")
+    public AvisoResponse reabrir(@PathVariable UUID id, Authentication auth) {
+        return service.reabrir(id, extractEmail(auth), extractRole(auth));
     }
 
     @DeleteMapping("/{id}")

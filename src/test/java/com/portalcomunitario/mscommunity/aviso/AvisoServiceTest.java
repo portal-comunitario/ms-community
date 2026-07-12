@@ -51,7 +51,7 @@ class AvisoServiceTest {
                 aviso(AvisoEstado.APROBADO, "b@x.com")
         ));
 
-        List<AvisoResponse> res = service.findAll("COMMUNITY_ADMIN");
+        List<AvisoResponse> res = service.findAll("COMMUNITY_ADMIN", "admin@x.com");
 
         assertThat(res).hasSize(2);
         verify(repository).findAllByOrderByCreatedAtDesc();
@@ -65,7 +65,7 @@ class AvisoServiceTest {
                 aviso(AvisoEstado.PENDIENTE, "a@x.com")
         ));
 
-        List<AvisoResponse> res = service.findAll("PLATFORM_ADMIN");
+        List<AvisoResponse> res = service.findAll("PLATFORM_ADMIN", "admin@x.com");
 
         assertThat(res).hasSize(1);
         verify(repository).findAllByOrderByCreatedAtDesc();
@@ -78,7 +78,7 @@ class AvisoServiceTest {
                 aviso(AvisoEstado.APROBADO, "b@x.com")
         ));
 
-        List<AvisoResponse> res = service.findAll("VECINO");
+        List<AvisoResponse> res = service.findAll("VECINO", "v@x.com");
 
         assertThat(res).hasSize(1);
         assertThat(res.get(0).estado()).isEqualTo("APROBADO");

@@ -44,9 +44,9 @@ class AvisoControllerTest {
     @Test
     @DisplayName("findAll: delega pasando el rol del token")
     void findAll_delega() {
-        when(service.findAll("VECINO")).thenReturn(List.of());
+        when(service.findAll("VECINO", "v@x.com")).thenReturn(List.of());
         controller.findAll(auth("v@x.com", "VECINO"));
-        verify(service).findAll("VECINO");
+        verify(service).findAll("VECINO", "v@x.com");
     }
 
     @Test
@@ -176,9 +176,9 @@ class AvisoControllerTest {
     @DisplayName("findAll: token sin claim role trata al usuario como VECINO")
     void findAll_rolNulo_defaultVecino() {
         Jwt jwt = Jwt.withTokenValue("t").header("alg", "none").subject("v@x.com").build();
-        when(service.findAll("VECINO")).thenReturn(List.of());
+        when(service.findAll("VECINO", "v@x.com")).thenReturn(List.of());
         controller.findAll(new JwtAuthenticationToken(jwt));
-        verify(service).findAll("VECINO");
+        verify(service).findAll("VECINO", "v@x.com");
     }
 
 }

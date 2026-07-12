@@ -59,6 +59,10 @@ public class Aviso {
     @Column(nullable = false)
     private boolean resuelto;
 
+    /** Momento en que se marcó resuelto (para el borrado a los 30 días). Null si no está resuelto. */
+    @Column(name = "resuelto_at")
+    private LocalDateTime resueltoAt;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
@@ -110,6 +114,9 @@ public class Aviso {
 
     public boolean isResuelto() { return resuelto; }
     public void setResuelto(boolean resuelto) { this.resuelto = resuelto; }
+
+    public LocalDateTime getResueltoAt() { return resueltoAt; }
+    public void setResueltoAt(LocalDateTime resueltoAt) { this.resueltoAt = resueltoAt; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

@@ -4,11 +4,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
 @Service
 public class AvisoService {
+
+    /** Días que un aviso resuelto permanece en "modo fantasma" antes de borrarse solo. */
+    private static final int DIAS_FANTASMA = 30;
 
     private final AvisoRepository repository;
 
@@ -16,16 +20,25 @@ public class AvisoService {
         this.repository = repository;
     }
 
-    /** Admins ven todos; vecinos solo APROBADO. */
-    public List<AvisoResponse> findAll(String role) {
-        if ("COMMUNITY_ADMIN".equals(role) || "PLATFORM_ADMIN".equals(role)) {
-            return repository.findAllByOrderByCreatedAtDesc().stream()
-                    .map(AvisoResponse::from)
-                    .toList();
-        }
-        return repository.findByEstadoOrderByCreatedAtDesc(AvisoEstado.APROBADO).stream()
+    /**
+     * Admins ven todos los estados; vecinos solo APROBADO. Los avisos resueltos
+     * ("modo fantasma") solo los ve su propio autor. De paso, purga los resueltos
+     * con más de {@value #DIAS_FANTASMA} días.
+     */
+    public List<AvisoResponse> findAll(String role, String requesterEmail) {
+        repository.deleteResueltosAnterioresA(LocalDateTime.now().minusDays(DIAS_FANTASMA));
+        boolean isAdmin = "COMMUNITY_ADMIN".equals(role) || "PLATFORM_ADMIN".equals(role);
+        List<Aviso> base = isAdmin
+                ? repository.findAllByOrderByCreatedAtDesc()
+                : repository.findByEstadoOrderByCreatedAtDesc(AvisoEstado.APROBADO);
+        return base.stream()
+                .filter(a -> !a.isResuelto() || esAutor(a, requesterEmail))
                 .map(AvisoResponse::from)
                 .toList();
+    }
+
+    private boolean esAutor(Aviso a, String email) {
+        return a.getAuthorEmail() != null && a.getAuthorEmail().equalsIgnoreCase(email);
     }
 
     /** Cola de moderación. */
@@ -67,11 +80,21 @@ public class AvisoService {
         return AvisoResponse.from(repository.save(a));
     }
 
-    /** El autor (o un admin) marca su aviso como resuelto/vendido. */
+    /** El autor (o un admin) marca su aviso como resuelto/vendido → pasa a "modo fantasma". */
     public AvisoResponse marcarResuelto(UUID id, String requesterEmail, String role) {
         Aviso a = get(id);
         requireAuthorOrAdmin(a, requesterEmail, role);
         a.setResuelto(true);
+        a.setResueltoAt(LocalDateTime.now());
+        return AvisoResponse.from(repository.save(a));
+    }
+
+    /** El autor (o un admin) reabre un aviso resuelto: vuelve a estar activo y visible para todos. */
+    public AvisoResponse reabrir(UUID id, String requesterEmail, String role) {
+        Aviso a = get(id);
+        requireAuthorOrAdmin(a, requesterEmail, role);
+        a.setResuelto(false);
+        a.setResueltoAt(null);
         return AvisoResponse.from(repository.save(a));
     }
 
