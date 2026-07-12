@@ -1,7 +1,11 @@
 package com.portalcomunitario.mscommunity.asistencia;
 
+import com.portalcomunitario.mscommunity.agrupacion.Agrupacion;
+import com.portalcomunitario.mscommunity.agrupacion.AgrupacionRepository;
 import com.portalcomunitario.mscommunity.agrupacion.InscripcionAgrupacion;
 import com.portalcomunitario.mscommunity.agrupacion.InscripcionAgrupacionRepository;
+import com.portalcomunitario.mscommunity.agrupacion.ReunionCancelada;
+import com.portalcomunitario.mscommunity.agrupacion.ReunionCanceladaRepository;
 import com.portalcomunitario.mscommunity.event.Event;
 import com.portalcomunitario.mscommunity.event.EventRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,6 +17,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -30,12 +38,15 @@ class AsistenciaServiceTest {
     @Mock private AsistenciaRepository asistenciaRepo;
     @Mock private EventRepository eventRepo;
     @Mock private InscripcionAgrupacionRepository inscripcionRepo;
+    @Mock private AgrupacionRepository agrupacionRepo;
+    @Mock private ReunionCanceladaRepository reunionCanceladaRepo;
 
     private AsistenciaService service;
 
     @BeforeEach
     void setUp() {
-        service = new AsistenciaService(asistenciaRepo, eventRepo, inscripcionRepo);
+        service = new AsistenciaService(asistenciaRepo, eventRepo, inscripcionRepo,
+                agrupacionRepo, reunionCanceladaRepo);
     }
 
     private Event actividad(UUID eventoId, UUID agrupacionId) {
@@ -165,5 +176,69 @@ class AsistenciaServiceTest {
         List<MiAsistenciaDto> res = service.miAsistencia(ag, "a@x.com");
 
         assertThat(res).containsExactly(new MiAsistenciaDto(eventoId, true));
+    }
+
+    // ---- Sesiones derivadas de la reunión periódica ----
+
+    @Test
+    @DisplayName("sesiones: agrupación sin día de reunión no tiene sesiones")
+    void sesiones_sinReunion_vacio() {
+        UUID ag = UUID.randomUUID();
+        when(agrupacionRepo.findById(ag)).thenReturn(Optional.of(new Agrupacion()));
+
+        assertThat(service.sesiones(ag)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("sesiones: genera ocurrencias en el día correcto, con hora, y excluye canceladas")
+    void sesiones_generaOcurrencias_excluyeCanceladas() {
+        UUID ag = UUID.randomUUID();
+        Agrupacion a = new Agrupacion();
+        a.setReunionDiaSemana(5); // viernes (ISO)
+        a.setReunionHora(LocalTime.of(17, 0));
+        when(agrupacionRepo.findById(ag)).thenReturn(Optional.of(a));
+        LocalDate viernesReciente = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.FRIDAY));
+        ReunionCancelada c = new ReunionCancelada();
+        c.setAgrupacionId(ag);
+        c.setFecha(viernesReciente);
+        when(reunionCanceladaRepo.findByAgrupacionId(ag)).thenReturn(List.of(c));
+
+        List<SesionAsistenciaDto> res = service.sesiones(ag);
+
+        assertThat(res).isNotEmpty();
+        assertThat(res).allSatisfy(s -> {
+            assertThat(s.fecha().getDayOfWeek()).isEqualTo(DayOfWeek.FRIDAY);
+            assertThat(s.fecha()).isBeforeOrEqualTo(LocalDate.now());
+            assertThat(s.hora()).isEqualTo("17:00");
+        });
+        assertThat(res).noneMatch(s -> s.fecha().equals(viernesReciente)); // cancelada excluida
+    }
+
+    @Test
+    @DisplayName("sesionId: es determinístico por (agrupación, fecha) y distinto por fecha")
+    void sesionId_deterministico() {
+        UUID ag = UUID.randomUUID();
+        LocalDate f = LocalDate.of(2026, 7, 10);
+        assertThat(AsistenciaService.sesionId(ag, f)).isEqualTo(AsistenciaService.sesionId(ag, f));
+        assertThat(AsistenciaService.sesionId(ag, f)).isNotEqualTo(AsistenciaService.sesionId(ag, f.plusWeeks(1)));
+    }
+
+    @Test
+    @DisplayName("marcarSesion: guarda cada socio con eventoId=sesión y agrupación, sin buscar un evento")
+    void marcarSesion_guardaPorSocio() {
+        UUID ag = UUID.randomUUID();
+        UUID ses = UUID.randomUUID();
+        when(inscripcionRepo.findByAgrupacionId(ag)).thenReturn(List.of(
+                socio(ag, "a@x.com"), socio(ag, "b@x.com")));
+        when(asistenciaRepo.findByEventoIdAndVecinoEmail(any(), any())).thenReturn(Optional.empty());
+
+        service.marcarSesion(ag, ses, List.of("a@x.com"));
+
+        ArgumentCaptor<Asistencia> captor = ArgumentCaptor.forClass(Asistencia.class);
+        verify(asistenciaRepo, times(2)).save(captor.capture());
+        assertThat(captor.getAllValues().get(0).getEventoId()).isEqualTo(ses);
+        assertThat(captor.getAllValues().get(0).getAgrupacionId()).isEqualTo(ag);
+        assertThat(captor.getAllValues().get(0).isPresente()).isTrue();   // a@x.com
+        assertThat(captor.getAllValues().get(1).isPresente()).isFalse();  // b@x.com
     }
 }

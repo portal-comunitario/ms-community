@@ -36,6 +36,31 @@ public class AsistenciaController {
         return service.deActividad(eventoId);
     }
 
+    /** Sesiones de asistencia = ocurrencias de la reunión periódica (autenticado). */
+    @GetMapping("/agrupaciones/{agrupacionId}/asistencia/sesiones")
+    public List<SesionAsistenciaDto> sesiones(@PathVariable UUID agrupacionId) {
+        return service.sesiones(agrupacionId);
+    }
+
+    /** Pasar lista de una sesión (dirigente): socios con su estado. */
+    @GetMapping("/agrupaciones/{agrupacionId}/asistencia/sesiones/{sesionId}")
+    public List<AsistenciaSocioDto> deSesion(@PathVariable UUID agrupacionId,
+                                             @PathVariable UUID sesionId, Authentication auth) {
+        requireAdmin(auth);
+        return service.deSesion(agrupacionId, sesionId);
+    }
+
+    /** Guarda la asistencia de una sesión (dirigente): body { presentes: [emails] }. */
+    @PutMapping("/agrupaciones/{agrupacionId}/asistencia/sesiones/{sesionId}")
+    public List<AsistenciaSocioDto> marcarSesion(@PathVariable UUID agrupacionId,
+                                                 @PathVariable UUID sesionId,
+                                                 @RequestBody MarcarAsistenciaRequest req,
+                                                 Authentication auth) {
+        requireAdmin(auth);
+        service.marcarSesion(agrupacionId, sesionId, req != null ? req.presentes() : List.of());
+        return service.deSesion(agrupacionId, sesionId);
+    }
+
     /** Asistencia del vecino autenticado en una agrupación. */
     @GetMapping("/agrupaciones/{id}/mi-asistencia")
     public List<MiAsistenciaDto> miAsistencia(@PathVariable UUID id, Authentication auth) {
